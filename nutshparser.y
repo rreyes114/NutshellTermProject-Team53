@@ -14,8 +14,8 @@ int yyerror(char *s);
 %token <string> COMMAND WORD STRING NUMBER FLOAT RELATION FLAG FILEPATH
 
 %%
-cmd_line: 							//semantic values will run functions later on
-	COMMAND 						{return 1;}
+cmd_line:
+	COMMAND							{return 1;} //these will run functions later on
 	| COMMAND STRING WORD			{return 1;}
 	| COMMAND STRING				{return 1;}
 	| COMMAND FILEPATH				{return 1;}
