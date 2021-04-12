@@ -6,25 +6,71 @@
 
 int yylex(void);
 int yyerror(char *s);
+
+//built-in commands prototypes
+int runCD(char* arg);
+int runSetAlias(char *name, char *word);
+int runPrintAlias(void);
+int runUnalias(char *name);
+int runSetEnv(char *variable, char *word);
+int runUnsetEnv(char *name);
+int runPrintEnv(void);
 %}
 
 %union {char *string;}
 
-%start cmd_line
-%token <string> COMMAND WORD STRING NUMBER FLOAT RELATION FLAG FILEPATH
+%start commandList
+%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV
 
 %%
-cmd_line:
-	COMMAND							{return 1;} //these will run functions later on
-	| COMMAND STRING WORD			{return 1;}
-	| COMMAND STRING				{return 1;}
-	| COMMAND FILEPATH				{return 1;}
-	| cmd_line RELATION cmd_line	{return 1;}
+commandList:
+	command PIPE commandList 	{/*wtf do I do here*/}
+	| command END				{/*same*/}
+	| /* other cases */;
+
+command:
+	BYE						{exit(1); return 1;}
+	| CD STRING				{return 1;}
+	| ALIAS STRING STRING	{return 1;}
+	| ALIAS					{return 1;}
+	| UNALIAS STRING		{return 1;}
+	| SETENV STRING STRING	{return 1;}
+	| UNSETENV STRING		{return 1;}
+	| PRINTENV				{return 1;}
 	| /* etc */;
 %%
 
 //functions for doing things
 int yyerror(char *s) {
-  printf("%s\n",s);
-  return 0;
-  }
+	printf("%s\n",s);
+	return 0;
+}
+
+//built-in commands
+int runCD(char* arg) {
+	
+}
+
+int runSetAlias(char *name, char *word) {
+	
+}
+
+int runPrintAlias(void) {
+	
+}
+
+int runUnalias(char *name) {
+	
+}
+
+int runSetEnv(char *variable, char *word) {
+	
+}
+
+int runUnsetEnv(char *name) {
+	
+}
+
+int runPrintEnv(void) {
+	
+}
