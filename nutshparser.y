@@ -30,14 +30,14 @@ commandList:
 	| /* other cases */;
 
 command:
-	BYE						{exit(1); return 1;}
-	| CD STRING				{runCD($2); return 1;}
-	| ALIAS STRING STRING	{runSetAlias($2, $3); return 1;}
-	| ALIAS					{runPrintAlias(); return 1;}
-	| UNALIAS STRING		{runUnalias($2); return 1;}
-	| SETENV STRING STRING	{runSetEnv($2, $3); return 1;}
-	| UNSETENV STRING		{runUnsetEnv($2); return 1;}
-	| PRINTENV				{runPrintEnv(); return 1;}
+	BYE	END						{exit(1); return 1;}
+	| CD STRING	END				{runCD($2); return 1;}
+	| ALIAS STRING STRING END	{runSetAlias($2, $3); return 1;}
+	| ALIAS	END					{runPrintAlias(); return 1;}
+	| UNALIAS STRING END		{runUnalias($2); return 1;}
+	| SETENV STRING STRING END	{runSetEnv($2, $3); return 1;}
+	| UNSETENV STRING END		{runUnsetEnv($2); return 1;}
+	| PRINTENV END				{runPrintEnv(); return 1;}
 	| /* etc */;
 %%
 
@@ -99,7 +99,7 @@ int runSetAlias(char *name, char *word) {
 
 int runPrintAlias(void) {
 	for (int i = 0; i < aliasIndex; i++) {
-		printf("%s\n", aliasTable.name[i]);
+		printf("%s\t%s\n", aliasTable.name[i], aliasTable.word[i]);
 	}
 }
 
@@ -119,11 +119,11 @@ int runUnalias(char *name) {
 int runSetEnv(char *variable, char *word) {
 	for (int i = 0; i < varIndex; i++) {
 		if(strcmp(variable, word) == 0){
-			printf("Error, expansion of \"%s\" would create a loop.\n", name);
+			printf("Error, expansion of \"%s\" would create a loop.\n", variable);
 			return 1;
 		}
 		else if((strcmp(varTable.var[i], variable) == 0) && (strcmp(varTable.word[i], word) == 0)){
-			printf("Error, expansion of \"%s\" would create a loop.\n", name);
+			printf("Error, expansion of \"%s\" would create a loop.\n", variable);
 			return 1;
 		}
 		else if(strcmp(varTable.var[i], variable) == 0) {
@@ -131,7 +131,7 @@ int runSetEnv(char *variable, char *word) {
 			return 1;
 		}
 	}
-	strcpy(varTable.name[varIndex], variable);
+	strcpy(varTable.var[varIndex], variable);
 	strcpy(varTable.word[varIndex], word);
 	varIndex++;
 	return 1;
@@ -141,7 +141,7 @@ int runUnsetEnv(char *variable) {
 	for (int i = 0; i < varIndex; i++) {
 		//swap var at found index with last valid var, then decrement counter
 		if(strcmp(varTable.var[i], variable) == 0){
-			strcpy(varTable.var[i], varTable.name[varIndex-1]);
+			strcpy(varTable.var[i], varTable.var[varIndex-1]);
 			strcpy(varTable.word[i], varTable.word[varIndex-1]);
 			varIndex--;
 			break;
@@ -152,6 +152,6 @@ int runUnsetEnv(char *variable) {
 
 int runPrintEnv(void) {
 	for (int i = 0; i < varIndex; i++) {
-		printf("%s\n", varTable.var[i]);
+		printf("%s\t%s\n", varTable.var[i], varTable.word[i]);
 	}
 }

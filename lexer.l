@@ -42,7 +42,7 @@ unalias             { return UNALIAS; }
 setenv              { return SETENV; }
 unsetenv            { return UNSETENV; }
 printenv            { return PRINTENV; }
-|                   { return PIPE; }
+"|"                   { return PIPE; }
 "\n"		        { return END; }
 [\"]                { BEGIN(string_condition); }
 
