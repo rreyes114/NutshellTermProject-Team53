@@ -1,7 +1,7 @@
 #include "stdbool.h"
 #include <limits.h>
 
-typedef struct evTable {
+typedef struct evTable { 
    char var[128][100];
    char word[128][100];
 } evTable;
