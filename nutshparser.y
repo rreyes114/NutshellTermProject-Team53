@@ -31,13 +31,13 @@ commandList:
 
 command:
 	BYE						{exit(1); return 1;}
-	| CD STRING				{return 1;}
-	| ALIAS STRING STRING	{return 1;}
-	| ALIAS					{return 1;}
-	| UNALIAS STRING		{return 1;}
-	| SETENV STRING STRING	{return 1;}
-	| UNSETENV STRING		{return 1;}
-	| PRINTENV				{return 1;}
+	| CD STRING				{runCD($2); return 1;}
+	| ALIAS STRING STRING	{runSetAlias($2, $3); return 1;}
+	| ALIAS					{runPrintAlias(); return 1;}
+	| UNALIAS STRING		{runUnalias($2); return 1;}
+	| SETENV STRING STRING	{runSetEnv($2, $3); return 1;}
+	| UNSETENV STRING		{runUnsetEnv($2); return 1;}
+	| PRINTENV				{runPrintEnv(); return 1;}
 	| /* etc */;
 %%
 
@@ -70,9 +70,9 @@ int runCD(char* arg) {
 		}
 		else {
 			printf("Directory not found\n");
-                       	return 1;
+            return 1;
 		}
-	}
+	}	
 }
 
 int runSetAlias(char *name, char *word) {
@@ -98,7 +98,9 @@ int runSetAlias(char *name, char *word) {
 }
 
 int runPrintAlias(void) {
-	
+	for (int i = 0; i < aliasIndex; i++) {
+		printf("%s\n", aliasTable.name[i]);
+	}
 }
 
 int runUnalias(char *name) {
@@ -149,5 +151,7 @@ int runUnsetEnv(char *variable) {
 }
 
 int runPrintEnv(void) {
-
+	for (int i = 0; i < varIndex; i++) {
+		printf("%s\n", varTable.var[i]);
+	}
 }
