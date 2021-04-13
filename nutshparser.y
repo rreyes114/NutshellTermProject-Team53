@@ -49,11 +49,52 @@ int yyerror(char *s) {
 
 //built-in commands
 int runCD(char* arg) {
-	
+	if (arg[0] != '/') { // arg is relative path
+		strcat(varTable.word[0], "/");
+		strcat(varTable.word[0], arg);
+
+		if(chdir(varTable.word[0]) == 0) {
+			return 1;
+		}
+		else {
+			getcwd(cwd, sizeof(cwd));
+			strcpy(varTable.word[0], cwd);
+			printf("Directory not found\n");
+			return 1;
+		}
+	}
+	else { // arg is absolute path
+		if(chdir(arg) == 0){
+			strcpy(varTable.word[0], arg);
+			return 1;
+		}
+		else {
+			printf("Directory not found\n");
+                       	return 1;
+		}
+	}
 }
 
 int runSetAlias(char *name, char *word) {
-	
+	for (int i = 0; i < aliasIndex; i++) {
+		if(strcmp(name, word) == 0){
+			printf("Error, expansion of \"%s\" would create a loop.\n", name);
+			return 1;
+		}
+		else if((strcmp(aliasTable.name[i], name) == 0) && (strcmp(aliasTable.word[i], word) == 0)){
+			printf("Error, expansion of \"%s\" would create a loop.\n", name);
+			return 1;
+		}
+		else if(strcmp(aliasTable.name[i], name) == 0) {
+			strcpy(aliasTable.word[i], word);
+			return 1;
+		}
+	}
+	strcpy(aliasTable.name[aliasIndex], name);
+	strcpy(aliasTable.word[aliasIndex], word);
+	aliasIndex++;
+
+	return 1;
 }
 
 int runPrintAlias(void) {
@@ -61,17 +102,52 @@ int runPrintAlias(void) {
 }
 
 int runUnalias(char *name) {
-	
+	for (int i = 0; i < aliasIndex; i++) {
+		//swap alias at found index with last valid alias, then decrement counter
+		if(strcmp(aliasTable.name[i], name) == 0){
+			strcpy(aliasTable.name[i], aliasTable.name[aliasIndex-1]);
+			strcpy(aliasTable.word[i], aliasTable.word[aliasIndex-1]);
+			aliasIndex--;
+			break;
+		}
+	}
+	return 1;
 }
 
 int runSetEnv(char *variable, char *word) {
-	
+	for (int i = 0; i < varIndex; i++) {
+		if(strcmp(variable, word) == 0){
+			printf("Error, expansion of \"%s\" would create a loop.\n", name);
+			return 1;
+		}
+		else if((strcmp(varTable.var[i], variable) == 0) && (strcmp(varTable.word[i], word) == 0)){
+			printf("Error, expansion of \"%s\" would create a loop.\n", name);
+			return 1;
+		}
+		else if(strcmp(varTable.var[i], variable) == 0) {
+			strcpy(varTable.var[i], variable);
+			return 1;
+		}
+	}
+	strcpy(varTable.name[varIndex], variable);
+	strcpy(varTable.word[varIndex], word);
+	varIndex++;
+	return 1;
 }
 
-int runUnsetEnv(char *name) {
-	
+int runUnsetEnv(char *variable) {
+	for (int i = 0; i < varIndex; i++) {
+		//swap var at found index with last valid var, then decrement counter
+		if(strcmp(varTable.var[i], variable) == 0){
+			strcpy(varTable.var[i], varTable.name[varIndex-1]);
+			strcpy(varTable.word[i], varTable.word[varIndex-1]);
+			varIndex--;
+			break;
+		}
+	}
+	return 1;
 }
 
 int runPrintEnv(void) {
-	
+
 }
