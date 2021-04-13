@@ -5,7 +5,7 @@ CC=/usr/bin/cc
 all:  flex-config bison-config nutshparser nutshscanner nutshell nutshell-out
 
 flex-config:
-	flex FLEX_FILE_NAME
+	flex lexer.l
 
 bison-config:
 	bison -d nutshparser.y
