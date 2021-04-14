@@ -16,6 +16,10 @@ int runUnalias(char *name);
 int runSetEnv(char *variable, char *word);
 int runUnsetEnv(char *name);
 int runPrintEnv(void);
+
+//command table functions
+int storeCommand(char *name);
+int storeArgument(char *arg);
 %}
 
 %union {char *string;}
@@ -23,11 +27,11 @@ int runPrintEnv(void);
 %start commandList
 %token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV
 
-%%
+%% 
 commandList:
-	command PIPE commandList 	{/*wtf do I do here*/}
-	| command END				{/*same*/}
-	| /* other cases */;
+	commandList PIPE command 	{/*code to store a pipe command*/}
+	| command					{}
+	;
 
 command:
 	BYE	END						{exit(1); return 1;}
@@ -38,13 +42,38 @@ command:
 	| SETENV STRING STRING END	{runSetEnv($2, $3); return 1;}
 	| UNSETENV STRING END		{runUnsetEnv($2); return 1;}
 	| PRINTENV END				{runPrintEnv(); return 1;}
-	| /* etc */;
+	| STRING argumentList END	{storeCommand($1); return 1;}
+	;
+	
+argumentList:
+	argument argumentList	{}
+	| %empty				{}
+	;
+	
+argument:
+	STRING 		{storeArgument($1);}
+	;
+	
 %%
 
 //functions for doing things
 int yyerror(char *s) {
 	printf("%s\n",s);
 	return 0;
+}
+
+//command table functions
+int storeCommand(char *name) {
+	strcpy(cmdTable.name[cmdIndex], name);
+	cmdIndex++;
+	return 1;
+}
+
+int storeArgument(char *arg) {
+	int argIndex = cmdTable.argcnt[cmdIndex];
+	strcpy(cmdTable.args[cmdIndex][argIndex], arg);
+	cmdTable.argcnt[cmdIndex]++;
+	return 1;
 }
 
 //built-in commands
@@ -101,6 +130,18 @@ int runPrintAlias(void) {
 	for (int i = 0; i < aliasIndex; i++) {
 		printf("%s\t%s\n", aliasTable.name[i], aliasTable.word[i]);
 	}
+	/*
+	//printing command Table also for debugging purposes
+	printf("Number of commands: %i\n", cmdIndex);
+	for (int i = 0; i < cmdIndex; i++) {
+		printf("Command %i: %s\n", i, cmdTable.name[i]);
+		int numArgs = cmdTable.argcnt[i];
+		for (int j = 0; j < numArgs; j++) {
+			printf("\t%s", cmdTable.args[i][j]);
+		}
+		printf("\n");
+	}
+	*/
 }
 
 int runUnalias(char *name) {
