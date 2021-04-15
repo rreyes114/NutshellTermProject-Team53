@@ -9,6 +9,7 @@
 
 char *getcwd(char *buf, size_t size);
 int yyparse();
+void clearCmdTable();
 
 int main()
 {
@@ -36,7 +37,27 @@ int main()
     {
         printf("[%s]>> ", varTable.word[2]);
         yyparse();
+		
+		//pipes and io
+		
+		//execute commands
+		
+		clearCmdTable();
     }
 
    return 0;
+}
+
+void clearCmdTable() {
+	for(int i = 0; i < cmdIndex; i++) {
+		memset(cmdTable.name[i], 0, sizeof(cmdTable.name[i])); //clear name
+		int numArgs = cmdTable.argcnt[i];
+		for (int j = 0; j < numArgs; j++) {
+			memset(cmdTable.args[i][j], 0, sizeof(cmdTable.args[i][j])); //clear arguments
+		}
+		cmdTable.argcnt[i] = 0; //clear arg count
+		memset(cmdTable.infile[i], 0, sizeof(cmdTable.infile[i])); //clear input file
+		memset(cmdTable.outfile[i], 0, sizeof(cmdTable.outfile[i])); //clear output file
+	}
+	cmdIndex = 0;
 }
