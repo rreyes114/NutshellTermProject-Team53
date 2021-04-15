@@ -83,11 +83,13 @@ int storeArgument(char *arg) {
 
 int storeInputFile(char *filename) {
 	strcpy(cmdTable.infile[cmdIndex], filename);
+	in = true;
 	return 1;
 }
 
 int storeOutputFile(char *filename) {
 	strcpy(cmdTable.outfile[cmdIndex], filename);
+	out = true;
 	return 1;
 }
 

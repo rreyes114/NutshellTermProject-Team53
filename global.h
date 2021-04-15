@@ -41,6 +41,8 @@ cTable cmdTable;
 
 int aliasIndex, varIndex, cmdIndex;
 
+bool in, out;
+
 char cwd[PATH_MAX];
 
 char* subAliases(char* name);

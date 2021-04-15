@@ -11,7 +11,10 @@ char *getcwd(char *buf, size_t size);
 int yyparse();
 void clearCmdTable();
 int executeCommand(char *command, char **args);
+<<<<<<< HEAD
 void runPipedCommands();
+void printTable();
+
 
 int main()
 {
@@ -46,30 +49,43 @@ int main()
 		}
 		else if(cmdIndex == 1){
 		//execute commands
-			//for(int j = 0; j < cmdIndex; j++) {
-			//while(cmdIndex > 0) {
-				//create copy of args listed in command table
-				char* argList[100];
-				//char argList[128][100]
-				int argCount = cmdTable.argcnt[cmdIndex-1];
-				argList[0] = &cmdTable.name[cmdIndex-1];
-				for (int i = 1; i < argCount+1; i++){
-					argList[i] = &cmdTable.args[cmdIndex-1][i-1];
-					//strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
-				}
-				argList[argCount+1] = NULL;
 
-				int pid = fork();
-				if (pid == 0){
-					// child process, call execute here
-					//search for and execute command, if exists somewhere in PATH variable
-					executeCommand(cmdTable.name[cmdIndex-1], argList);
-				}
-				//wait for 2 seconds for child process to finish
-				wait(2);
-				//cmdIndex--;
-			//}
-		}
+        while (cmdIndex > 0){
+            printTable();
+            //create copy of args listed in command table
+            char* argList[100];
+            //char argList[128][100]
+            int argCount = cmdTable.argcnt[cmdIndex-1];
+            argList[0] = &cmdTable.name[cmdIndex-1];
+            for (int i = 1; i < argCount+1; i++){
+                argList[i] = &cmdTable.args[cmdIndex-1][i-1];
+                //strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
+            }
+            argList[argCount+1] = NULL;
+
+            int pid = fork();
+            if (pid == 0){
+                if (in)
+                {
+                    int fd0 = open(cmdTable.infile[cmdIndex-1], O_RDONLY);
+                    dup2(fd0, STDIN_FILENO);
+                    close(fd0);
+                }
+
+                if (out)
+                {
+                    int fd1 = creat(cmdTable.outfile[cmdIndex-1] , 0644) ;
+                    dup2(fd1, STDOUT_FILENO);
+                    close(fd1);
+                }
+                // child process, call execute here
+                //search for and execute command, if exists somewhere in PATH variable
+                executeCommand(cmdTable.name[cmdIndex-1], argList);
+            }
+            //wait for 2 seconds for child process to finish
+            wait(2);
+            cmdIndex--;
+        }
 		
 		clearCmdTable();
     }
@@ -187,4 +203,18 @@ void clearCmdTable() {
 		memset(cmdTable.outfile[i], 0, sizeof(cmdTable.outfile[i])); //clear output file
 	}
 	cmdIndex = 0;
+}
+
+void printTable(){
+    printf("Number of commands: %i\n", cmdIndex);
+	for (int i = 0; i < cmdIndex; i++) {
+		printf("Command %i: %s\n", i, cmdTable.name[i]);
+		int numArgs = cmdTable.argcnt[i];
+		for (int j = 0; j < numArgs; j++) {
+			printf("\t%s", cmdTable.args[i][j]);
+		}
+		printf("\n");
+		printf("\tInput File: %s\n", cmdTable.infile[i]);
+		printf("\tOutput File: %s\n", cmdTable.outfile[i]);
+	}
 }
