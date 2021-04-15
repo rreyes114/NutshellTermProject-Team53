@@ -11,7 +11,7 @@
 char *getcwd(char *buf, size_t size);
 int yyparse();
 void clearCmdTable();
-int executeCommand(char *command);
+int executeCommand(char *command, int commandIndex);
 void runPipedCommands();
 void printTable();
 
@@ -99,7 +99,7 @@ void runPipedCommands() {
             argList[argCount+1] = NULL;
 			//int pid2 = fork();
 			//if (pid2 == 0){
-				executeCommand(cmdTable.name[i], argList);
+				executeCommand(cmdTable.name[i], cmdIndex-1);
 			//}
 			//wait(2);
 			//exit(1); //there is a child escaping
@@ -117,17 +117,17 @@ void runPipedCommands() {
 	while(waitpid(0,0,0) <= 0);
 }
 
-int executeCommand(char *command){
+int executeCommand(char *command, int commandIndex){
 
     printf("in execute command \n");
 
     //create copy of args listed in command table
     char* argList[100];
     //char argList[128][100]
-    int argCount = cmdTable.argcnt[cmdIndex-1];
-    argList[0] = &cmdTable.name[cmdIndex-1];
+    int argCount = cmdTable.argcnt[commandIndex];
+    argList[0] = &cmdTable.name[commandIndex];
     for (int i = 1; i < argCount+1; i++){
-        argList[i] = &cmdTable.args[cmdIndex-1][i-1];
+        argList[i] = &cmdTable.args[commandIndex][i-1];
         //strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
     }
     argList[argCount+1] = NULL;
@@ -161,14 +161,14 @@ int executeCommand(char *command){
             if (pid == 0){
                 if (in)
                 {
-                    int fd0 = open(cmdTable.infile[cmdIndex-1], O_RDONLY);
+                    int fd0 = open(cmdTable.infile[commandIndex], O_RDONLY);
                     dup2(fd0, STDIN_FILENO);
                     close(fd0);
                 }
 
                 if (out)
                 {
-                    int fd1 = creat(cmdTable.outfile[cmdIndex-1] , 0644) ;
+                    int fd1 = creat(cmdTable.outfile[commandIndex] , 0644) ;
                     dup2(fd1, STDOUT_FILENO);
                     close(fd1);
                 }
