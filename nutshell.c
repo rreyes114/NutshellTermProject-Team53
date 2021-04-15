@@ -11,7 +11,7 @@ char *getcwd(char *buf, size_t size);
 int yyparse();
 void clearCmdTable();
 int executeCommand(char *command, char **args);
-
+void runPipedCommands();
 
 int main()
 {
@@ -41,24 +41,35 @@ int main()
         yyparse();
 		
 		//pipes and io
-		
+		if(cmdIndex > 1) {
+			runPipedCommands();
+		}
+		else if(cmdIndex == 1){
 		//execute commands
-        while (cmdIndex > 0){
-            //create copy of args listed in command table
-            char* argList[100];
-            //char argList[128][100]
-            int argCount = cmdTable.argcnt[cmdIndex-1];
-            argList[0] = &cmdTable.name[cmdIndex-1];
-            for (int i = 1; i < argCount+1; i++){
-                argList[i] = &cmdTable.args[cmdIndex-1][i-1];
-                //strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
-            }
-            argList[argCount+1] = NULL;
+			//for(int j = 0; j < cmdIndex; j++) {
+			//while(cmdIndex > 0) {
+				//create copy of args listed in command table
+				char* argList[100];
+				//char argList[128][100]
+				int argCount = cmdTable.argcnt[cmdIndex-1];
+				argList[0] = &cmdTable.name[cmdIndex-1];
+				for (int i = 1; i < argCount+1; i++){
+					argList[i] = &cmdTable.args[cmdIndex-1][i-1];
+					//strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
+				}
+				argList[argCount+1] = NULL;
 
-            //search for and execute command, if exists somewhere in PATH variable
-            executeCommand(cmdTable.name[cmdIndex-1], argList);
-            cmdIndex--;
-        }
+				int pid = fork();
+				if (pid == 0){
+					// child process, call execute here
+					//search for and execute command, if exists somewhere in PATH variable
+					executeCommand(cmdTable.name[cmdIndex-1], argList);
+				}
+				//wait for 2 seconds for child process to finish
+				wait(2);
+				//cmdIndex--;
+			//}
+		}
 		
 		clearCmdTable();
     }
@@ -66,7 +77,64 @@ int main()
    return 0;
 }
 
-int executeCommand(char *command, char** args){
+void runPipedCommands() {
+	int numPipes = cmdIndex-1;
+	//printf("Number of pipes: %i\n", numPipes);
+	printf("\n"); //without this, the pipes won't work -> LEAVE THIS IN
+	pid_t pid;
+	int pipefds[2*numPipes]; //Initialize pipe.
+	for(int i = 0; i < 2*numPipes; i++) {
+		if(pipe(pipefds + i*2) < 0) { printf("Error: pipe failed to initialize.\n"); return; }
+	}
+	
+	for(int i = 0; i < cmdIndex; i++) {
+		pid = fork(); //fork process
+		//printf("I just forked\n");
+		//printf(" ");
+		if (pid < 0) { printf("Error: fork failed.\n"); return; }
+		
+		if(pid == 0) {
+			//child
+			if(i != 0) { //if not first command, read from prev pipe
+				if(dup2(pipefds[(i-1)*2], 0) < 0) { printf("dup2 error.\n"); return;}
+			}
+			if(i != cmdIndex-1) { //if not last command, write to next pipe
+				if(dup2(pipefds[i*2 + 1], 1) < 0) { printf("dup2 error.\n"); return;}
+			}
+			
+			for(int j = 0; j < 2*numPipes; j++) {
+				close(pipefds[i]);
+			}
+			//execute command
+            char* argList[100];
+			//fix argList
+			int argCount = cmdTable.argcnt[i];
+            argList[0] = &cmdTable.name[i];
+            for (int k = 1; k < argCount+1; k++){
+                argList[k] = &cmdTable.args[i][k-1];
+            }
+            argList[argCount+1] = NULL;
+			//int pid2 = fork();
+			//if (pid2 == 0){
+				executeCommand(cmdTable.name[i], argList);
+			//}
+			//wait(2);
+			//exit(1); //there is a child escaping
+		}
+	}
+	wait(5);
+	//close pipe in parent
+	for(int i = 0; i < 2 * numPipes; i++) {
+		close(pipefds[i]);
+		//puts("closed pipe in parent");
+	}
+	//printf("closed pipe in parent\n");
+	//printf(" ");
+	
+	while(waitpid(0,0,0) <= 0);
+}
+
+int executeCommand(char *command, char **args){
 
     //get current PATH value from env table
     char* pathvar;
