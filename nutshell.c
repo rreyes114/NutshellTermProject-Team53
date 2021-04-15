@@ -51,7 +51,26 @@ int main()
 		}
 		else if(cmdIndex == 1){
             //execute commands
-            executeCommand(cmdTable.name[cmdIndex-1]); 
+            int pid = fork();
+            if (pid == 0){
+                if (in)
+                {
+                    int fd0 = open(cmdTable.infile[commandIndex], O_RDONLY);
+                    dup2(fd0, STDIN_FILENO);
+                    close(fd0);
+                }
+
+                if (out)
+                {
+                    int fd1 = creat(cmdTable.outfile[commandIndex] , 0644) ;
+                    dup2(fd1, STDOUT_FILENO);
+                    close(fd1);
+                }
+                // child process, call execute here
+                //search for and execute command, if exists somewhere in PATH variable
+                executeCommand(filePath, cmdIndex-1);
+            }
+            wait(2);
         }       
 		
 		clearCmdTable();
@@ -157,27 +176,9 @@ int executeCommand(char *command, int commandIndex){
 
         if (access(filePath, F_OK) == 0){
             //file does exist, execute with execv()
-            int pid = fork();
-            if (pid == 0){
-                if (in)
-                {
-                    int fd0 = open(cmdTable.infile[commandIndex], O_RDONLY);
-                    dup2(fd0, STDIN_FILENO);
-                    close(fd0);
-                }
+            execv(filePath, argList);
+            printf("execv failed");
 
-                if (out)
-                {
-                    int fd1 = creat(cmdTable.outfile[commandIndex] , 0644) ;
-                    dup2(fd1, STDOUT_FILENO);
-                    close(fd1);
-                }
-                // child process, call execute here
-                //search for and execute command, if exists somewhere in PATH variable
-                execv(filePath, argList);
-                printf("execv failed");
-            }
-            wait(2);
             return 1;
         }
         //print current path just to debug PATH parsing
