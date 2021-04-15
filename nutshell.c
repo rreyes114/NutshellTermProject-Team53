@@ -51,6 +51,7 @@ int main()
 			runPipedCommands();
 		}
 		else if(cmdIndex == 1){
+        }
 		//execute commands
 
         while (cmdIndex > 0){
