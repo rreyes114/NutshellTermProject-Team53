@@ -46,6 +46,8 @@ command:
 	| PRINTENV 					{runPrintEnv();}
 	| STRING argumentList LESS FILENAME GREATER FILENAME	{storeInputFile($4); storeOutputFile($6); storeCommand($1);}
 	| STRING argumentList GREATER FILENAME 	{storeOutputFile($4); storeCommand($1);}
+	| STRING FILENAME GREATER FILENAME 	{storeInputFile($2); storeOutputFile($4); storeCommand($1);}
+	| STRING FILENAME LESS FILENAME 	{storeOutputFile($2); storeInputFile($4); storeCommand($1);}
 	| STRING argumentList LESS FILENAME 	{storeInputFile($4); storeCommand($1);}
 	| STRING argumentList 		{storeCommand($1);}
 	;

@@ -6,6 +6,7 @@
 #include <string.h>
 #include "global.h"
 #include <unistd.h>
+#include <fcntl.h>
 
 char *getcwd(char *buf, size_t size);
 int yyparse();
@@ -19,6 +20,8 @@ int main()
     aliasIndex = 0;
     varIndex = 0;
 	cmdIndex = 0;
+    in = false;
+    out = false;
 
     getcwd(cwd, sizeof(cwd));
 
