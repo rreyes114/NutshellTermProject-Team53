@@ -44,11 +44,18 @@ int main()
 		
 		//execute commands
         while (cmdIndex > 0){
+            //create copy of args listed in command table
             char* argList[100];
+            //char argList[128][100]
             int argCount = cmdTable.argcnt[cmdIndex-1];
-            for (int i = 0; i < argCount; i++){
-                strcpy(argList[100], cmdTable.args[cmdIndex-1][i]);
+            argList[0] = &cmdTable.name[cmdIndex-1];
+            for (int i = 1; i < argCount+1; i++){
+                argList[i] = &cmdTable.args[cmdIndex-1][i-1];
+                //strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
             }
+            argList[argCount+1] = NULL;
+
+            //search for and execute command, if exists somewhere in PATH variable
             executeCommand(cmdTable.name[cmdIndex-1], argList);
             cmdIndex--;
         }
@@ -59,7 +66,7 @@ int main()
    return 0;
 }
 
-int executeCommand(char *command, char **args){
+int executeCommand(char *command, char** args){
 
     //get current PATH value from env table
     char* pathvar;
@@ -74,6 +81,8 @@ int executeCommand(char *command, char **args){
     char *currentPath = strtok(pathvar, ":");
 	while(currentPath != NULL)
 	{
+        printf("'%s'\n", currentPath);
+
         //initialize path on stack, with max length of 1000 - this way no memory is dynamically allocated
         char filePath[1000];
         strcpy(filePath, currentPath);
