@@ -11,8 +11,7 @@
 char *getcwd(char *buf, size_t size);
 int yyparse();
 void clearCmdTable();
-int executeCommand(char *command, char **args);
-<<<<<<< HEAD
+int executeCommand(char *command);
 void runPipedCommands();
 void printTable();
 
@@ -51,45 +50,9 @@ int main()
 			runPipedCommands();
 		}
 		else if(cmdIndex == 1){
-        }
-		//execute commands
-
-        while (cmdIndex > 0){
-            printTable();
-            //create copy of args listed in command table
-            char* argList[100];
-            //char argList[128][100]
-            int argCount = cmdTable.argcnt[cmdIndex-1];
-            argList[0] = &cmdTable.name[cmdIndex-1];
-            for (int i = 1; i < argCount+1; i++){
-                argList[i] = &cmdTable.args[cmdIndex-1][i-1];
-                //strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
-            }
-            argList[argCount+1] = NULL;
-
-            int pid = fork();
-            if (pid == 0){
-                if (in)
-                {
-                    int fd0 = open(cmdTable.infile[cmdIndex-1], O_RDONLY);
-                    dup2(fd0, STDIN_FILENO);
-                    close(fd0);
-                }
-
-                if (out)
-                {
-                    int fd1 = creat(cmdTable.outfile[cmdIndex-1] , 0644) ;
-                    dup2(fd1, STDOUT_FILENO);
-                    close(fd1);
-                }
-                // child process, call execute here
-                //search for and execute command, if exists somewhere in PATH variable
-                executeCommand(cmdTable.name[cmdIndex-1], argList);
-            }
-            //wait for 2 seconds for child process to finish
-            wait(2);
-            cmdIndex--;
-        }
+            //execute commands
+            executeCommand(cmdTable.name[cmdIndex-1]); 
+        }       
 		
 		clearCmdTable();
     }
@@ -154,7 +117,18 @@ void runPipedCommands() {
 	while(waitpid(0,0,0) <= 0);
 }
 
-int executeCommand(char *command, char **args){
+int executeCommand(char *command){
+
+    //create copy of args listed in command table
+        char* argList[100];
+        //char argList[128][100]
+        int argCount = cmdTable.argcnt[cmdIndex-1];
+        argList[0] = &cmdTable.name[cmdIndex-1];
+        for (int i = 1; i < argCount+1; i++){
+            argList[i] = &cmdTable.args[cmdIndex-1][i-1];
+            //strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
+        }
+        argList[argCount+1] = NULL;
 
     //get current PATH value from env table
     char* pathvar;
@@ -181,8 +155,27 @@ int executeCommand(char *command, char **args){
 
         if (access(filePath, F_OK) == 0){
             //file does exist, execute with execv()
-            execv(filePath, args);
-            printf("Successfully called %s in PATH directory %s", command, currentPath);
+            int pid = fork();
+            if (pid == 0){
+                if (in)
+                {
+                    int fd0 = open(cmdTable.infile[cmdIndex-1], O_RDONLY);
+                    dup2(fd0, STDIN_FILENO);
+                    close(fd0);
+                }
+
+                if (out)
+                {
+                    int fd1 = creat(cmdTable.outfile[cmdIndex-1] , 0644) ;
+                    dup2(fd1, STDOUT_FILENO);
+                    close(fd1);
+                }
+                // child process, call execute here
+                //search for and execute command, if exists somewhere in PATH variable
+                execv(filePath, argList);
+            }
+            wait(2);
+            printf("successfully called execv\n");
             return 1;
         }
         //print current path just to debug PATH parsing
