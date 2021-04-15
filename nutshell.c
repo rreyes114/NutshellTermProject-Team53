@@ -119,19 +119,21 @@ void runPipedCommands() {
 
 int executeCommand(char *command){
 
+    printf("in execute command \n");
+
     //create copy of args listed in command table
-        char* argList[100];
-        //char argList[128][100]
-        int argCount = cmdTable.argcnt[cmdIndex-1];
-        argList[0] = &cmdTable.name[cmdIndex-1];
-        for (int i = 1; i < argCount+1; i++){
-            argList[i] = &cmdTable.args[cmdIndex-1][i-1];
-            //strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
-        }
-        argList[argCount+1] = NULL;
+    char* argList[100];
+    //char argList[128][100]
+    int argCount = cmdTable.argcnt[cmdIndex-1];
+    argList[0] = &cmdTable.name[cmdIndex-1];
+    for (int i = 1; i < argCount+1; i++){
+        argList[i] = &cmdTable.args[cmdIndex-1][i-1];
+        //strcpy(argList[i], cmdTable.args[cmdIndex-1][i]);
+    }
+    argList[argCount+1] = NULL;
 
     //get current PATH value from env table
-    char* pathvar;
+    char[100] pathvar;
     for (int i = 0; i < varIndex; i++) {
 		if (strcmp(varTable.var[i], "PATH") == 0){
             strcpy(pathvar, varTable.word[i]);
@@ -173,9 +175,9 @@ int executeCommand(char *command){
                 // child process, call execute here
                 //search for and execute command, if exists somewhere in PATH variable
                 execv(filePath, argList);
+                printf("execv failed");
             }
             wait(2);
-            printf("successfully called execv\n");
             return 1;
         }
         //print current path just to debug PATH parsing
