@@ -10,6 +10,8 @@
 char *getcwd(char *buf, size_t size);
 int yyparse();
 void clearCmdTable();
+int executeCommand(char *command, char **args);
+
 
 int main()
 {
@@ -41,12 +43,60 @@ int main()
 		//pipes and io
 		
 		//execute commands
+        while (cmdIndex > 0){
+            char* argList[100];
+            int argCount = cmdTable.argcnt[cmdIndex-1];
+            for (int i = 0; i < argCount; i++){
+                strcpy(argList[100], cmdTable.args[cmdIndex-1][i]);
+            }
+            executeCommand(cmdTable.name[cmdIndex-1], argList);
+            cmdIndex--;
+        }
 		
 		clearCmdTable();
     }
 
    return 0;
 }
+
+int executeCommand(char *command, char **args){
+
+    //get current PATH value from env table
+    char* pathvar;
+    for (int i = 0; i < varIndex; i++) {
+		if (strcmp(varTable.var[i], "PATH") == 0){
+            strcpy(pathvar, varTable.word[i]);
+            break;
+        }
+	}
+
+    //split path
+    char *currentPath = strtok(pathvar, ":");
+	while(currentPath != NULL)
+	{
+        //initialize path on stack, with max length of 1000 - this way no memory is dynamically allocated
+        char filePath[1000];
+        strcpy(filePath, currentPath);
+        strcat(filePath, "/");
+        strcat(filePath, command);
+
+        printf("%s", filePath);
+
+        if (access(filePath, F_OK) == 0){
+            //file does exist, execute with execv()
+            execv(filePath, args);
+            printf("Successfully called %s in PATH directory %s", command, currentPath);
+            return 1;
+        }
+        //print current path just to debug PATH parsing
+		printf("'%s'\n", currentPath);
+		currentPath = strtok(NULL, ":");
+	}
+    //nothing was found 
+    printf("Could not find executable for command %s in any of the directories specified in PATH variable", command);
+    return 1;
+}
+
 
 void clearCmdTable() {
 	for(int i = 0; i < cmdIndex; i++) {
