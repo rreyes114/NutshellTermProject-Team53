@@ -42,7 +42,10 @@ unalias             { return UNALIAS; }
 setenv              { return SETENV; }
 unsetenv            { return UNSETENV; }
 printenv            { return PRINTENV; }
-"|"                   { return PIPE; }
+"|"                 { return PIPE; }
+">"                 { return GREATER; }
+"<"                 { return LESS; }
+{CHAR}+"."{CHAR}+	{ yylval.string = strdup(yytext); return FILENAME; }
 "\n"		        { return END; }
 [\"]                { BEGIN(string_condition); }
 

@@ -20,29 +20,34 @@ int runPrintEnv(void);
 //command table functions
 int storeCommand(char *name);
 int storeArgument(char *arg);
+int storeInputFile(char *filename);
+int storeOutputFile(char *filename);
 %}
 
 %union {char *string;}
 
 %start commandList
-%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV
+%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV FILENAME GREATER LESS
 
 %% 
 commandList:
-	commandList PIPE command 	{/*code to store a pipe command*/}
-	| command					{}
+	command PIPE commandList	{}
+	| command END				{return 1;}
 	;
 
 command:
-	BYE	END						{exit(1); return 1;}
-	| CD STRING	END				{runCD($2); return 1;}
-	| ALIAS STRING STRING END	{runSetAlias($2, $3); return 1;}
-	| ALIAS	END					{runPrintAlias(); return 1;}
-	| UNALIAS STRING END		{runUnalias($2); return 1;}
-	| SETENV STRING STRING END	{runSetEnv($2, $3); return 1;}
-	| UNSETENV STRING END		{runUnsetEnv($2); return 1;}
-	| PRINTENV END				{runPrintEnv(); return 1;}
-	| STRING argumentList END	{storeCommand($1); return 1;}
+	BYE							{exit(1);}
+	| CD STRING					{runCD($2);}
+	| ALIAS STRING STRING 		{runSetAlias($2, $3);}
+	| ALIAS						{runPrintAlias();}
+	| UNALIAS STRING 			{runUnalias($2);}
+	| SETENV STRING STRING 		{runSetEnv($2, $3);}
+	| UNSETENV STRING 			{runUnsetEnv($2);}
+	| PRINTENV 					{runPrintEnv();}
+	| FILENAME					{printf("Found filename token %s\n", $1);}
+	| STRING argumentList GREATER FILENAME 	{storeOutputFile($4); storeCommand($1);}
+	| STRING argumentList LESS FILENAME 	{storeInputFile($4); storeCommand($1);}
+	| STRING argumentList 		{storeCommand($1);}
 	;
 	
 argumentList:
@@ -73,6 +78,16 @@ int storeArgument(char *arg) {
 	int argIndex = cmdTable.argcnt[cmdIndex];
 	strcpy(cmdTable.args[cmdIndex][argIndex], arg);
 	cmdTable.argcnt[cmdIndex]++;
+	return 1;
+}
+
+int storeInputFile(char *filename) {
+	strcpy(cmdTable.infile[cmdIndex], filename);
+	return 1;
+}
+
+int storeOutputFile(char *filename) {
+	strcpy(cmdTable.outfile[cmdIndex], filename);
 	return 1;
 }
 
@@ -131,7 +146,7 @@ int runPrintAlias(void) {
 		printf("%s\t%s\n", aliasTable.name[i], aliasTable.word[i]);
 	}
 	/*
-	//printing command Table also for debugging purposes
+	//printing command Table also for debugging purposes - COMMENT THIS OUT
 	printf("Number of commands: %i\n", cmdIndex);
 	for (int i = 0; i < cmdIndex; i++) {
 		printf("Command %i: %s\n", i, cmdTable.name[i]);
@@ -140,6 +155,8 @@ int runPrintAlias(void) {
 			printf("\t%s", cmdTable.args[i][j]);
 		}
 		printf("\n");
+		printf("\tInput File: %s\n", cmdTable.infile[i]);
+		printf("\tOutput File: %s\n", cmdTable.outfile[i]);
 	}
 	*/
 }
