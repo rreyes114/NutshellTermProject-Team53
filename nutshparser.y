@@ -27,7 +27,7 @@ int storeOutputFile(char *filename);
 %union {char *string;}
 
 %start commandList
-%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV FILENAME GREATER LESS
+%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV GREATER LESS FILENAME
 
 %% 
 commandList:
@@ -44,7 +44,7 @@ command:
 	| SETENV STRING STRING 		{runSetEnv($2, $3);}
 	| UNSETENV STRING 			{runUnsetEnv($2);}
 	| PRINTENV 					{runPrintEnv();}
-	| FILENAME					{printf("Found filename token %s\n", $1);}
+	| STRING argumentList LESS FILENAME GREATER FILENAME	{storeInputFile($4); storeOutputFile($6); storeCommand($1);}
 	| STRING argumentList GREATER FILENAME 	{storeOutputFile($4); storeCommand($1);}
 	| STRING argumentList LESS FILENAME 	{storeInputFile($4); storeCommand($1);}
 	| STRING argumentList 		{storeCommand($1);}
