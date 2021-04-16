@@ -46,13 +46,21 @@ bool ifEnv(char* name){
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
 ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 
+%x env_condition
+
+CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
+ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+
 %%
+
+
+
 
 <string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
 <string_condition>[\"]          {BEGIN(INITIAL);}
 
 <env_condition>[\}]              {BEGIN(INITIAL);}
-env_condition{ANYCHAR}+          { yylval.string = strdup(yytext); return ENV;}
+<env_condition>{ANYCHAR}+          { yylval.string = strdup(yytext); return ENV;}
 
 [ ]		            { }
 bye                 { return BYE; }
