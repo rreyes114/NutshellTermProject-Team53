@@ -51,7 +51,11 @@ int main()
 		}
 		else if(cmdIndex == 1){
             //execute commands
-            executeCommand(cmdTable.name[cmdIndex-1]); 
+			int pid = fork();
+            if (pid == 0){
+				executeCommand(cmdTable.name[cmdIndex-1], cmdIndex-1); 
+			}
+			wait(2);
         }       
 		
 		clearCmdTable();
@@ -71,6 +75,7 @@ void runPipedCommands() {
 	}
 	
 	for(int i = 0; i < cmdIndex; i++) {
+		//printf("I will fork\n");
 		pid = fork(); //fork process
 		//printf("I just forked\n");
 		//printf(" ");
@@ -79,27 +84,27 @@ void runPipedCommands() {
 		if(pid == 0) {
 			//child
 			if(i != 0) { //if not first command, read from prev pipe
-				if(dup2(pipefds[(i-1)*2], 0) < 0) { printf("dup2 error.\n"); return;}
+				if(dup2(pipefds[(i-1)*2], 0) < 0) { printf("dup2 read error.\n"); return;}
 			}
 			if(i != cmdIndex-1) { //if not last command, write to next pipe
-				if(dup2(pipefds[i*2 + 1], 1) < 0) { printf("dup2 error.\n"); return;}
+				if(dup2(pipefds[i*2 + 1], 1) < 0) { printf("dup2 write error.\n"); return;}
 			}
 			
 			for(int j = 0; j < 2*numPipes; j++) {
 				close(pipefds[i]);
 			}
 			//execute command
-            char* argList[100];
+            //char* argList[100];
 			//fix argList
-			int argCount = cmdTable.argcnt[i];
-            argList[0] = &cmdTable.name[i];
-            for (int k = 1; k < argCount+1; k++){
-                argList[k] = &cmdTable.args[i][k-1];
-            }
-            argList[argCount+1] = NULL;
+			//int argCount = cmdTable.argcnt[i];
+            //argList[0] = &cmdTable.name[i];
+            //for (int k = 1; k < argCount+1; k++){
+            //    argList[k] = &cmdTable.args[i][k-1];
+            //}
+            //argList[argCount+1] = NULL;
 			//int pid2 = fork();
 			//if (pid2 == 0){
-				executeCommand(cmdTable.name[i], cmdIndex-1);
+			executeCommand(cmdTable.name[i], i);
 			//}
 			//wait(2);
 			//exit(1); //there is a child escaping
@@ -119,7 +124,7 @@ void runPipedCommands() {
 
 int executeCommand(char *command, int commandIndex){
 
-    printf("in execute command \n");
+    //printf("in execute command \n");
 
     //create copy of args listed in command table
     char* argList[100];
@@ -133,7 +138,7 @@ int executeCommand(char *command, int commandIndex){
     argList[argCount+1] = NULL;
 
     //get current PATH value from env table
-    char[100] pathvar;
+    char pathvar[100];
     for (int i = 0; i < varIndex; i++) {
 		if (strcmp(varTable.var[i], "PATH") == 0){
             strcpy(pathvar, varTable.word[i]);
@@ -157,8 +162,8 @@ int executeCommand(char *command, int commandIndex){
 
         if (access(filePath, F_OK) == 0){
             //file does exist, execute with execv()
-            int pid = fork();
-            if (pid == 0){
+            //int pid = fork();
+            //if (pid == 0){
                 if (in)
                 {
                     int fd0 = open(cmdTable.infile[commandIndex], O_RDONLY);
@@ -176,12 +181,12 @@ int executeCommand(char *command, int commandIndex){
                 //search for and execute command, if exists somewhere in PATH variable
                 execv(filePath, argList);
                 printf("execv failed");
-            }
-            wait(2);
+            //}
+            //wait(2);
             return 1;
         }
         //print current path just to debug PATH parsing
-		printf("'%s'\n", currentPath);
+		//printf("'%s'\n", currentPath);
 		currentPath = strtok(NULL, ":");
 	}
     //nothing was found 
@@ -201,6 +206,8 @@ void clearCmdTable() {
 		memset(cmdTable.infile[i], 0, sizeof(cmdTable.infile[i])); //clear input file
 		memset(cmdTable.outfile[i], 0, sizeof(cmdTable.outfile[i])); //clear output file
 	}
+	in = false;
+	out = false;
 	cmdIndex = 0;
 }
 
