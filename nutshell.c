@@ -68,7 +68,7 @@ void runPipedCommands() {
 	//printf("Number of pipes: %i\n", numPipes);
 	printf("\n"); //without this, the pipes won't work -> LEAVE THIS IN
 	pid_t pid;
-	int pipefds[2*numPipes]; //Initialize pipe.
+	int pipefds[2*numPipes]; //Initialize pipe
 	for(int i = 0; i < 2*numPipes; i++) {
 		if(pipe(pipefds + i*2) < 0) { printf("Error: pipe failed to initialize.\n"); return; }
 	}
@@ -149,7 +149,6 @@ int executeCommand(char *command, int commandIndex){
     char *currentPath = strtok(pathvar, ":");
 	while(currentPath != NULL)
 	{
-        printf("'%s'\n", currentPath);
 
         //initialize path on stack, with max length of 1000 - this way no memory is dynamically allocated
         char filePath[1000];
@@ -157,7 +156,6 @@ int executeCommand(char *command, int commandIndex){
         strcat(filePath, "/");
         strcat(filePath, command);
 
-        printf("%s", filePath);
 
         if (access(filePath, F_OK) == 0){
             //file does exist, execute with execv()
