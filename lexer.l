@@ -20,23 +20,6 @@ bool ifAlias(char* name){
     }
     return false;
 }
-
-char* subEnvs(char* name){
-    for (int i = 0; i < envIndex; i++) {
-        if(strcmp(varTable.variable[i], name) == 0) {
-            return varTable.word[i];
-        }
-    }
-    return name;
-}
-bool ifEnv(char* name){
-    for (int i = 0; i < varIndex; i++) {
-        if(strcmp(varTable.variable[i], name) == 0) {
-            return true;
-        }
-    }
-    return false;
-}
 %}
 %array
 %option noyywrap
@@ -46,21 +29,10 @@ bool ifEnv(char* name){
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
 ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 
-%x env_condition
-
-CHARS            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
-ANYCHARS            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
-
 %%
-
-
-
 
 <string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
 <string_condition>[\"]          {BEGIN(INITIAL);}
-
-<env_condition>[\}]              {BEGIN(INITIAL);}
-<env_condition>{ANYCHARS}+          { yylval.string = strdup(yytext); return ENV;}
 
 [ ]		            { }
 bye                 { return BYE; }
@@ -73,7 +45,6 @@ printenv            { return PRINTENV; }
 "|"                 { return PIPE; }
 ">"                 { return GREATER; }
 "<"                 { return LESS; }
-"${"                 { BEGIN(env_condition);}
 {CHAR}+"."{CHAR}+	{ yylval.string = strdup(yytext); return FILENAME; }
 "\n"		        { return END; }
 [\"]                { BEGIN(string_condition); }
@@ -85,26 +56,10 @@ printenv            { return PRINTENV; }
                            for ( int i = strlen(subAliases(yytext)) - 1; i >= 0; --i )
                                unput( yycopy[i] );
                            free( yycopy );
-                    } 
-                    else {
+                    } else {
                         printf("yytext: %s\n", yytext);
                         yylval.string = strdup(yytext);
                         return STRING;
                     };
                      }
-
-{CHAR}+              {if(ifAlias(yytext)) {
-                        printf("yytext: %s\n", yytext);
-                        //source: https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html
-                           char *yycopy = strdup( subAliases(yytext) );
-                           for ( int i = strlen(subAliases(yytext)) - 1; i >= 0; --i )
-                               unput( yycopy[i] );
-                           free( yycopy );
-                    } 
-                    else {
-                        printf("yytext: %s\n", yytext);
-                        yylval.string = strdup(yytext);
-                        return STRING;
-                    };
-                     }            
 %%
