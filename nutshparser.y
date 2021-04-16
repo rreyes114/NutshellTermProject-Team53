@@ -59,7 +59,7 @@ argumentList:
 	
 argument:
 	STRING 		{storeArgument($1);}
-	FILENAME    {storeArgument($1);}
+	| FILENAME    {storeArgument($1);}
 	;
 	
 %%
