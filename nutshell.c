@@ -57,7 +57,6 @@ int main()
 			}
 			wait(2);
         }       
-		
 		clearCmdTable();
     }
 
