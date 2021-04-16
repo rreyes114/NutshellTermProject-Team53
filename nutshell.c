@@ -7,6 +7,7 @@
 #include "global.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 char *getcwd(char *buf, size_t size);
 int yyparse();
@@ -14,7 +15,7 @@ void clearCmdTable();
 int executeCommand(char *command, int commandIndex);
 void runPipedCommands();
 void printTable();
-
+bool wildCardMatch(char* filename, char* pattern, int n, int m);
 
 int main()
 {
@@ -50,17 +51,72 @@ int main()
 			runPipedCommands();
 		}
 		else if(cmdIndex == 1){
-            //execute commands
-			int pid = fork();
-            if (pid == 0){
-				executeCommand(cmdTable.name[cmdIndex-1], cmdIndex-1); 
+			//check for wildcards
+			int numArgs = cmdTable.argcnt[0];
+			int wildIndex = -1;
+			for(int i = 0; i < numArgs; i++) {
+				if( (strchr(cmdTable.args[0][i], '*') != NULL) || (strchr(cmdTable.args[0][i], '?') != NULL) ) {
+					wildIndex = i; break;
+				}	
 			}
-			wait(2);
+			//printf("wildIndex: %i\n", wildIndex);
+			//if a wild argument found
+			if (wildIndex != -1) {
+				char pattern[100];
+				strcpy(pattern, cmdTable.args[0][wildIndex]);
+				//search directory
+				DIR *dir;
+				struct dirent *ent;
+				if( (dir = opendir(varTable.word[0])) != NULL) {
+					while ( (ent = readdir(dir)) != NULL) {
+						if( wildCardMatch(ent->d_name, pattern, strlen(ent->d_name), strlen(pattern)) ) {
+							strcpy(cmdTable.args[0][wildIndex], ent->d_name);
+							int pid = fork();
+							if (pid == 0){
+								executeCommand(cmdTable.name[cmdIndex-1], cmdIndex-1); 
+							}
+							wait(2);
+						}
+					}
+				}
+			}
+			else {
+				//execute commands
+				int pid = fork();
+				if (pid == 0){
+					executeCommand(cmdTable.name[cmdIndex-1], cmdIndex-1); 
+				}
+				wait(2);
+			}
         }       
 		clearCmdTable();
     }
 
    return 0;
+}
+
+bool wildCardMatch(char* filename, char* pattern, int n, int m) { //n is strlen(filename), m is strlen(pattern)
+	if (m == 0)
+		return (n == 0);
+	bool lookup[n+1][m+1];
+	memset(lookup, false, sizeof(lookup));
+	lookup[0][0] = true;
+	
+	for(int j = 1; j <= m; j++)
+		if(pattern[j-1] == '*')
+			lookup[0][j] = lookup[0][j-1];
+	
+	for(int i = 1; i <= n; i++) {
+		for(int j = 1; j <= m; j++) {
+			if(pattern[j-1] == '*')
+				lookup[i][j] = lookup[i][j-1] || lookup[i-1][j];
+			else if(pattern[j-1] == '?' || filename[i-1] == pattern[j-1])
+				lookup[i][j] = lookup[i-1][j-1];
+			else
+				lookup[i][j] = false;
+		}
+	}
+	return lookup[n][m];
 }
 
 void runPipedCommands() {

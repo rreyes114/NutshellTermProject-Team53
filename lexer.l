@@ -27,6 +27,7 @@ bool ifAlias(char* name){
 %x string_condition
 
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
+WILDCHAR            [.A-Za-z0-9!\/_*?-][.A-Za-z0-9!\/_*?-]*
 ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 
 %%
@@ -42,10 +43,12 @@ unalias             { return UNALIAS; }
 setenv              { return SETENV; }
 unsetenv            { return UNSETENV; }
 printenv            { return PRINTENV; }
+2>					{ return REDERR; }
+&1					{ return STDOUT; }
 "|"                 { return PIPE; }
 ">"                 { return GREATER; }
 "<"                 { return LESS; }
-{CHAR}+"."{CHAR}+	{ yylval.string = strdup(yytext); return FILENAME; }
+{WILDCHAR}+"."{CHAR}+	{ yylval.string = strdup(yytext); return FILENAME; }
 "\n"		        { return END; }
 [\"]                { BEGIN(string_condition); }
 
