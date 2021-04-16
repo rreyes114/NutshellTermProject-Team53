@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 #include "global.h"
 
 int yylex(void);
@@ -27,7 +28,7 @@ int storeOutputFile(char *filename);
 %union {char *string;}
 
 %start commandList
-%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV GREATER LESS FILENAME
+%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV GREATER LESS FILENAME REDERR STDOUT
 
 %% 
 commandList:
@@ -44,6 +45,8 @@ command:
 	| SETENV STRING STRING 		{runSetEnv($2, $3);}
 	| UNSETENV STRING 			{runUnsetEnv($2);}
 	| PRINTENV 					{runPrintEnv();}
+	| REDERR FILENAME			{int fd1 = creat($2 , 0644); dup2(fd1, STDERR_FILENO); close(fd1);}
+	| REDERR STDOUT				{dup2(STDOUT_FILENO, STDERR_FILENO);}
 	| STRING argumentList LESS FILENAME GREATER FILENAME	{storeInputFile($4); storeOutputFile($6); storeCommand($1);}
 	| STRING argumentList GREATER FILENAME 	{storeOutputFile($4); storeCommand($1);}
 	| STRING FILENAME GREATER FILENAME 	{storeInputFile($2); storeOutputFile($4); storeCommand($1);}
