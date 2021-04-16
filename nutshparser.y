@@ -27,7 +27,7 @@ int storeOutputFile(char *filename);
 %union {char *string;}
 
 %start commandList
-%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV GREATER LESS FILENAME ENV
+%token <string> BYE CD STRING ALIAS END PIPE UNALIAS SETENV UNSETENV PRINTENV GREATER LESS FILENAME
 
 %% 
 commandList:
@@ -59,7 +59,6 @@ argumentList:
 	
 argument:
 	STRING 		{storeArgument($1);}
-	FILENAME    {storeArgument($1);}
 	;
 	
 %%
