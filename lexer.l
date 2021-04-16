@@ -23,15 +23,15 @@ bool ifAlias(char* name){
 
 char* subEnvs(char* name){
     for (int i = 0; i < envIndex; i++) {
-        if(strcmp(envTable.variable[i], name) == 0) {
-            return envTable.word[i];
+        if(strcmp(varTable.variable[i], name) == 0) {
+            return varTable.word[i];
         }
     }
     return name;
 }
 bool ifEnv(char* name){
     for (int i = 0; i < varIndex; i++) {
-        if(strcmp(envTable.variable[i], name) == 0) {
+        if(strcmp(varTable.variable[i], name) == 0) {
             return true;
         }
     }
@@ -60,7 +60,7 @@ ANYCHARS            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*
 <string_condition>[\"]          {BEGIN(INITIAL);}
 
 <env_condition>[\}]              {BEGIN(INITIAL);}
-<env_condition>{ANYCHAR}+          { yylval.string = strdup(yytext); return ENV;}
+<env_condition>{ANYCHARS}+          { yylval.string = strdup(yytext); return ENV;}
 
 [ ]		            { }
 bye                 { return BYE; }
